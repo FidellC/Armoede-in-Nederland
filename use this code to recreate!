@@ -1,0 +1,226 @@
+Set-up your environment:
+install.packages("tidyverse")
+library(tidyverse)
+2.1
+Combine all 3 data sets from 2011 2014 and 2017 in one excel file we call “combined_poverty_data.csv”
+
+2.2
+str(combined_poverty_data.csv)
+summary(combined_poverty_data.csv)
+head(combined_poverty_data.csv)
+Inkomensgrens      Duur inkomenspositie
+ Length:36          Length:36           
+ Class :character   Class :character    
+ Mode  :character   Mode  :character    
+                                        
+                                        
+                                        
+ Kenmerken van huishoudens   Regio's         
+ Length:36                 Length:36         
+ Class :character          Class :character  
+ Mode  :character          Mode  :character  
+                                             
+                                             
+                                             
+    Perioden    Particuliere huishoudens (x 1 000)
+ Min.   :2011   Min.   :  14.0                    
+ 1st Qu.:2011   1st Qu.: 116.2                    
+ Median :2014   Median : 275.0                    
+ Mean   :2014   Mean   : 391.1                    
+ 3rd Qu.:2017   3rd Qu.: 455.5                    
+ Max.   :2017   Max.   :1466.0                    
+ Personen (x 1 000) Minderjarige kinderen (x 1 000)
+ Min.   :  39.0     Min.   : 11.0                  
+ 1st Qu.: 287.5     1st Qu.: 77.5                  
+ Median : 613.5     Median :106.5                  
+ Mean   : 833.7     Mean   :201.5                  
+ 3rd Qu.:1166.0     3rd Qu.:284.5                  
+ Max.   :2818.0     Max.   :699.0                  
+ Particuliere huishoudens relatief (%)
+ Min.   :  8.00                       
+ 1st Qu.: 66.75                       
+ Median : 72.50                       
+ Mean   : 71.97                       
+ 3rd Qu.: 83.25                       
+ Max.   :105.00                       
+ Personen relatief (%)
+ Min.   : 5.00        
+ 1st Qu.:54.25        
+ Median :61.00        
+ Mean   :59.89        
+ 3rd Qu.:69.00        
+ Max.   :84.00        
+ Minderjarige kinderen relatief (%)      year     
+ Min.   :  7.00                     Min.   :2011  
+ 1st Qu.: 68.75                     1st Qu.:2011  
+ Median : 84.00                     Median :2014  
+ Mean   : 77.28                     Mean   :2014  
+ 3rd Qu.: 89.75                     3rd Qu.:2017  
+ Max.   :118.00                     Max.   :2017
+3.1
+-In excel we added a column “year”. in the dataset to make temporal analysis easier.
+- We made a variable for if the region is located in the “randstad”
+-Combined all datasets in one in excel called combined_poverty_data.csv
+-CBS also uses commas for decimal points which complicates R calculations so we then convert these to periods in excel.  
+CTRL A , CTRL H , then in the find what u put “,” and replace with “.” and then click replace all.
+-In R we then followed, then fixed the first column in which there was a strange character and called it “Inkomensgrens”. 
+names(poverty_data)[1] <- "Inkomensgrens"
+
+
+
+3.2
+-to simplify the typing of formulas
+poverty_data <- read_csv("combined_poverty_data.csv")
+-to calculate the poverty rate change 
+poverty_data <- poverty_data %>%
+    arrange(`Regio's`, year) %>%
+    group_by(`Regio's`) %>%
+    mutate(poverty_rate_change = `Personen relatief (%)` - lag(`Personen relatief (%)`))
+-to calculate the poverty ratio to total children 
+poverty_data <- poverty_data %>%
+  mutate(poverty_ratio_children_to_total = `Minderjarige kinderen relatief (%)` / `Personen relatief (%)`)
+
+now to view the dataset with the new variables 
+view(poverty_data)
+
+
+3.3
+-to plot the poverty rate over time
+ggplot(poverty_data, aes(x = year, y = `Personen relatief (%)`, color = `Regio's`)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  labs(
+    title = "Poverty Rate Over Time by Province",
+    x = "Year",
+    y = "Poverty Rate (%)",
+    color = "Province"
+  ) +
+  theme_minimal()
+
+
+ggplot(poverty_data, aes(x = Perioden, y = poverty_rate_change, color = `Regio's`)) +
+  geom_line(size = 1.3, na.rm = TRUE) +
+  geom_point(size = 3, na.rm = TRUE) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+  scale_x_continuous(breaks = c(2011, 2014, 2017)) +
+  labs(
+    title = "Year-on-Year Change in Poverty Rate by Province",
+    x = "Year",
+    y = "Change in Poverty Rate (%)",
+    color = "Province"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 11),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(face = "bold", size = 15)
+  )
+
+ggplot(poverty_data, aes(x = Perioden, y = poverty_ratio_children_to_total, color = `Regio's`)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2.5) +
+  scale_x_continuous(breaks = c(2011, 2014, 2017)) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "gray40") +
+  labs(
+    title = "Child-to-Total Poverty Ratio Over Time by Province",
+    subtitle = "Ratio of child poverty rate to total poverty rate",
+    x = "Year",
+    y = "Child/Total Poverty Ratio",
+    color = "Province"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold", size = 14),
+    axis.title = element_text(size = 12)
+  )
+
+
+3.4
+-(install map package)
+library(giscoR) 
+-Dutch province shapefile
+-renaming the provinces in our file to match the ones in the giscoR library
+nl_map <- gisco_get_nuts(country = "NL", nuts_level = 2, year = 2021)
+poverty_2017 <- poverty_data %>%
+  filter(Perioden == 2017) %>%
+  mutate(Regio_clean = case_when(
+    `Regio's` == "FryslÃƒÂ¢n (PV)" ~ "Friesland (NL)",    
+    `Regio's` == "Groningen (PV)" ~ "Groningen",
+    `Regio's` == "Drenthe (PV)" ~ "Drenthe",
+    `Regio's` == "Overijssel (PV)" ~ "Overijssel",
+    `Regio's` == "Flevoland (PV)" ~ "Flevoland",
+    `Regio's` == "Gelderland (PV)" ~ "Gelderland",
+    `Regio's` == "Utrecht (PV)" ~ "Utrecht",
+    `Regio's` == "Noord-Holland (PV)" ~ "Noord-Holland",
+    `Regio's` == "Zuid-Holland (PV)" ~ "Zuid-Holland",
+    `Regio's` == "Zeeland (PV)" ~ "Zeeland",
+    `Regio's` == "Noord-Brabant (PV)" ~ "Noord-Brabant",
+    `Regio's` == "Limburg (PV)" ~ "Limburg (NL)",
+    TRUE ~ NA_character
+  ))
+(Import issue from excell to R made frysland name mangled)
+-now yoiu join the poverty data and the map data from giscoR
+map_data <- nl_map %>%
+  left_join(poverty_2017, by = c("NAME_LATN" = "Regio_clean"))
+-make the map
+ggplot(map_data) +
+  geom_sf(aes(fill = `Personen relatief (%)`), color = "white") +
+  scale_fill_viridis_c(option = "plasma", direction = -1, name = "% in Poverty") +
+  labs(
+    title = "Poverty Rate by Province (2017)",
+    subtitle = "Based on % of people in low-income households",
+    caption = "Data: CBS, 2017"
+  ) +
+  theme_minimal()
+
+
+3.5
+-plot the children poverty ratio graph 
+ggplot(poverty_data, aes(x = Perioden, y = poverty_ratio_children_to_total, color = `Regio's`)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2.5) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "gray40") +
+  scale_x_continuous(breaks = c(2011, 2014, 2017)) +
+  labs(
+    title = "Child-to-Total Poverty Ratio Over Time by Province",
+    subtitle = "Ratio of child poverty rate to total poverty rate",
+    x = "Year",
+    y = "Child/Total Poverty Ratio"
+  ) +
+  theme_minimal()
+-plot the graph to compare regions in the most recent year (2017)
+poverty_data %>%
+  filter(Perioden == 2017) %>%
+  ggplot(aes(x = reorder(`Regio's`, -poverty_ratio_children_to_total), 
+             y = poverty_ratio_children_to_total, fill = `Regio's`)) +
+  geom_col() +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  labs(
+    title = "Child/Total Poverty Ratio by Province (2017)",
+    x = "Province",
+    y = "Ratio"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+
+3.6
+-making  aplot which measures the turning point in poverty rates 
+ggplot(poverty_data, aes(x = Perioden, y = `Personen relatief (%)`, color = `Regio's`)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2.5) +
+  geom_vline(xintercept = 2014, linetype = "dashed", color = "red") +
+  annotate("text", x = 2014, y = max(poverty_data$`Personen relatief (%)`, na.rm = TRUE),
+           label = "Post-Austerity Period", vjust = -0.5, hjust = -0.1, color = "red", angle = 90) +
+  scale_x_continuous(breaks = c(2011, 2014, 2017)) +
+  labs(
+    title = "Poverty Rate and the 2014 Turning Point",
+    subtitle = "Visualizing the impact of austerity and recovery policies",
+    x = "Year",
+    y = "Poverty Rate (%)"
+  ) +
+  theme_minimal()
+
+
+
