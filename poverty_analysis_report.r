@@ -179,7 +179,11 @@ ggplot(poverty_data, aes(x = Perioden, y = `Personen relatief (%)`, color = `Reg
 
 ## 4.1 Discuss Your Findings
 
-_<<Full discussion text from assignment report can be pasted here>>_
+The analysis we conducted on poverty in provinces in the Netherlands has revealed some disparities in the spatial, temporal and subgroup categories.
+Firstly we found that poverty is not evenly distributed spatially across the Netherlands. Provinces like Groningen, Friesland and Limburg consistently show elevated poverty rates than the National average. On the contrary, provinces such as Utrecht, Noord Holland and Zuid Holland show lower poverty rates. These consistent differences are very likely influenced by disparities in the labor market, variations in economic prospects or a difference in the quality of education.
+Most provinces experienced a rise in poverty between 2011 and 2014. This is likely to be caused by post-financial crisis austerity policies. On average, this rise quickly stabilized from 2014 till 2017 where most provinces returned to their previous poverty levels. However, Friesland and Groningen continued to show elevated poverty levels, indicating that recovery was uneven throughout the country.
+The child to total poverty ratio highlighted that families with children are more severely impacted by poverty than those without children. In Flevoland and Limburg families with children were 20% more likely to live in poverty compared to the general population. This pattern is not limited to just a few regions. Across the entire nation children were more likely to live in poverty compared to adults, underscoring great importance in implementing interventions to support families with children to prevent transgenerational poverty.
+We selected the Eurozone crisis as the anchor point for our event analysis as it began two years before our first dataset and it had long lasting visible effects across Europe. All Dutch provinces show a severe incline in poverty over the period 2011-2014 very likely to be caused by reduced public spending or a delayed impact of financial strain. The period from 2014-2017 showed a stabilization nationwide, though the unevenness of this recovery undermines the importance of province-specific strategies.
 
 # Part 5 - Reproducibility
 
